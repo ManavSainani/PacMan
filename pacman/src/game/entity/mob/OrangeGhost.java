@@ -1,32 +1,30 @@
 package game.entity.mob;
 
-import java.util.List;
-
-import game.entity.mob.Mob.Direction;
 import game.graphics.AnimatedSprite;
 import game.graphics.Screen;
 import game.graphics.Sprite;
 import game.graphics.SpriteSheet;
-import game.level.Node;
 import game.util.Vector2i;
-
-/* About: Orange Ghost uses a simple A.I. and is 
- * thus the easiest ghost to avoid. 
- */
 
 public class OrangeGhost extends Mob {
 
 	private double xa = 0;
 	private double ya = 0;
-	private double numX = 1;
-	private double numY = 1;
-
 	private int time = 0;
 
 	private boolean isScared = false;
-	private boolean walking = false;
 
-	private List<Node> path = null; // default equals null
+	/**
+	 * Clyde flees to his scatter corner when Pac-Man is within this many tiles
+	 * (Euclidean distance). Classic Pac-Man uses 8 tiles.
+	 */
+	private static final double FLEE_RADIUS = 8.0;
+
+	/**
+	 * Clyde's scatter corner in tile coordinates — where he retreats when
+	 * Pac-Man gets too close. Bottom-left area of the maze.
+	 */
+	private static final Vector2i SCATTER_CORNER = new Vector2i(2, 29);
 
 	private AnimatedSprite animSprite = new AnimatedSprite(SpriteSheet.orangeGhost, 16, 16, 3);
 	private Sprite sprite;
@@ -54,11 +52,25 @@ public class OrangeGhost extends Mob {
 	private double getDistance(Vector2i tile, Vector2i goal) {
 		double dx = tile.getX() - goal.getX();
 		double dy = tile.getY() - goal.getY();
-		return Math.sqrt(dx * dx + dy * dy); // distance
+		return Math.sqrt(dx * dx + dy * dy);
 	}
 
+	/**
+	 * Classic Clyde (OrangeGhost) pursuit/scatter movement.
+	 *
+	 * When far from Pac-Man (distance > 8 tiles): chases Pac-Man directly
+	 * using the level's A* pathfinder, identical to how other ghosts chase.
+	 *
+	 * When close to Pac-Man (distance <= 8 tiles): panics and retreats to
+	 * his scatter corner (bottom-left of the maze) instead of continuing
+	 * the chase. This makes him unpredictable — he approaches, gets scared,
+	 * runs away, gets far enough, then turns back around to chase again.
+	 *
+	 * Reference:
+	 * Birch, C. (2010). Understanding Pac-Man Ghost Behavior.
+	 * GameInternals. https://gameinternals.com/understanding-pac-man-ghost-behavior
+	 */
 	private void move() {
-
 		xa = 0;
 		ya = 0;
 		time++;
@@ -66,49 +78,48 @@ public class OrangeGhost extends Mob {
 		int px = (int) level.getClientsPlayer().getX();
 		int py = (int) level.getClientsPlayer().getY();
 		Vector2i start = new Vector2i((int) getX() >> 4, (int) getY() >> 4);
-		Vector2i destination = new Vector2i(px >> 4, py >> 4);
+		Vector2i pacmanTile = new Vector2i(px >> 4, py >> 4);
 
-		if (getDistance(start, destination) <= 8) {
-			if (start.getX() < destination.getX())
-				xa--;
-			if (start.getX() > destination.getX())
+		double distToPacman = getDistance(start, pacmanTile);
+
+		// Choose target: chase Pac-Man if far, scatter to corner if close
+		Vector2i target = (distToPacman > FLEE_RADIUS) ? pacmanTile : SCATTER_CORNER;
+
+		// Use the level's existing A* pathfinder to reach the target
+		java.util.List<game.level.Node> path = level.findPath(start, target);
+
+		if (path != null && path.size() > 0) {
+			// A* returns path from goal back to start, so last element is the next step
+			Vector2i next = path.get(path.size() - 1).tile;
+			int nextPx = next.getX() << 4;
+			int nextPy = next.getY() << 4;
+
+			if (x < nextPx)
 				xa++;
-			if (start.getY() < destination.getY())
-				ya--;
-			if (start.getY() > destination.getY())
+			if (x > nextPx)
+				xa--;
+			if (y < nextPy)
 				ya++;
-		} else {
-			path = level.findPath(start, destination);
-			if (path != null) {
-				if (path.size() > 0) {
-					Vector2i vec = path.get(path.size() - 1).tile;
-					if (x < (int) vec.getX() << 4)
-						xa++;
-					if (x > (int) vec.getX() << 4)
-						xa--;
-					if (y < (int) vec.getY() << 4)
-						ya++;
-					if (y > (int) vec.getY() << 4)
-						ya--;
-				}
-			}
+			if (y > nextPy)
+				ya--;
 		}
+
 		if (xa != 0 || ya != 0) {
 			move(xa, ya);
 			walking = true;
 		} else {
 			walking = false;
 		}
+
 		if (time % 60 > 120)
-			time = 0; // reset time to avoid game crash
+			time = 0;
 	}
 
 	@Override
 	public void update() {
-		// does shaky walk if scared
 		if (isScared) {
-			xa = random.nextInt(3) - 1; // gives random number from 0 to 2, subtracting one give either -1, 0 or 1
-										// randomly.
+			// Random walk when frightened — same pattern as other ghosts
+			xa = random.nextInt(3) - 1;
 			ya = random.nextInt(3) - 1;
 			animSprite.update();
 
@@ -124,22 +135,21 @@ public class OrangeGhost extends Mob {
 				animSprite.update();
 			else
 				animSprite.setFrame(0);
-			if (ya < 0) {
+
+			if (ya < 0)
 				dir = Direction.UP;
-			} else if (ya > 0) {
+			else if (ya > 0)
 				dir = Direction.DOWN;
-			}
-			if (xa < 0) {
+			if (xa < 0)
 				dir = Direction.LEFT;
-			} else if (xa > 0) {
+			else if (xa > 0)
 				dir = Direction.RIGHT;
-			}
 		}
 	}
 
 	@Override
 	public void render(Screen screen) {
 		sprite = animSprite.getSprites();
-		screen.renderPlayerDynamic((int) x - 7, (int) y - 8, sprite, false);
+		screen.renderPlayerDynamic((int) x - 7, (int) y - 7, sprite, false);
 	}
 }
