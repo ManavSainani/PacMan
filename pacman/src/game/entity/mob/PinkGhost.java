@@ -7,6 +7,27 @@ import game.level.Node;
 import game.util.Vector2i;
 import java.util.List;
 
+/**
+	 * A* Predictive Algorithm
+	 *
+	 * Pinky's implementation involves the A* algorithm, which uses the predictive heuristic to anticipate
+	 * Pac-Man's future position and target that location, rather than his current position (Blinky). 
+	 * It does this by calculating 2 steps ahead of Pac-Man's current position, making this approach more dynamic
+	 * and unpredictable.
+	 * 
+	 * Predictive Pursuit Reference:
+	 * Novikov, A., Yakovlev, S., & Gushchin, I. (2025).
+	 * Radioelectronic and Computer Systems, 1(113), 327-337.
+	 * https://doi.org/10.32620/reks.2025.1.21
+	 */
+
+	// Sources: 
+	// Pinky's Implementation: 
+	// http://donhodges.com/pacman_pinky_explanation.htm
+	// https://www.youtube.com/watch?v=GIoJgpm0F1E&t=855s
+	// Claude
+
+
 public class PinkGhost extends Mob {
 
 	private double xa = 0;
@@ -37,20 +58,6 @@ public class PinkGhost extends Mob {
 		this.x = x << 4;
 		this.y = y << 4;
 	}
-
-	/**
-	 * A* Predictive Algorithm
-	 *
-	 * Pinky's implementation involves the A* algorithm, which uses the predictive heuristic to anticipate
-	 * Pac-Man's future position and target that location, rather than his current position (Blinky). 
-	 * It does this by calculating 2 steps ahead of Pac-Man's current position, making this approach more dynamic
-	 * and unpredictable.
-	 * 
-	 * Predictive Pursuit Reference:
-	 * Novikov, A., Yakovlev, S., & Gushchin, I. (2025).
-	 * Radioelectronic and Computer Systems, 1(113), 327-337.
-	 * https://doi.org/10.32620/reks.2025.1.21
-	 */
 
 	private void move() {
 		xa = 0;

@@ -34,6 +34,13 @@ import game.graphics.Screen;
 import game.level.tile.Tile;
 import game.util.Vector2i;
 
+// Sources: 
+// A* Algorithm Changes: 
+// https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+// https://researchdatapod.com/a-star-algorithm/
+// https://www.geeksforgeeks.org/artificial-intelligence/a-algorithm-and-its-heuristic-search-strategy-in-artificial-intelligence/
+// Claude
+
 public class Level {
 	
 	public static Level spawn = new Level("/game/res/pac-man_level_design.png");
