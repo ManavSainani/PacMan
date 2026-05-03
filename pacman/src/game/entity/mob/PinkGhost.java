@@ -27,7 +27,6 @@ import java.util.List;
 	// https://www.youtube.com/watch?v=GIoJgpm0F1E&t=855s
 	// Claude
 
-
 public class PinkGhost extends Mob {
 
 	private double xa = 0;
