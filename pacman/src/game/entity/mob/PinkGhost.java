@@ -1,13 +1,26 @@
 package game.entity.mob;
-
-import java.util.List;
-
 import game.graphics.AnimatedSprite;
 import game.graphics.Screen;
 import game.graphics.Sprite;
 import game.graphics.SpriteSheet;
 import game.level.Node;
 import game.util.Vector2i;
+import java.util.List;
+
+/**
+	 * A* Predictive Algorithm .
+	 *
+	 * Pinky's implementation involves the A* algorithm, which uses the predictive heuristic to anticipate
+	 * Pac-Man's future position and target that location, rather than his current position (Blinky). 
+	 * It does this by calculating 2 steps ahead of Pac-Man's current position, making this approach more dynamic
+	 * and unpredictable.
+	 *
+	 * Based on the Rule-Based Pursuit Algorithm described in:
+	 * Novikov, A., Yakovlev, S., & Gushchin, I. (2025).
+	 * Radioelectronic and Computer Systems, 1(113), 327-337.
+	 * https://doi.org/10.32620/reks.2025.1.21
+	 */
+
 
 public class PinkGhost extends Mob {
 
@@ -15,13 +28,8 @@ public class PinkGhost extends Mob {
 	private double ya = 0;
 	private int time = 0;
 	
-	private int numX = 1; //used to change direction when not following	
-	private int numY = 1;
-	
 	private boolean isScared = false;
-	
-	private List<Node> path = null; //default equals null
-	
+
 	private AnimatedSprite animSprite = new AnimatedSprite(SpriteSheet.pinkGhost, 16, 16, 3);
 	private Sprite sprite;
 	
@@ -45,90 +53,84 @@ public class PinkGhost extends Mob {
 		this.y = y << 4;
 	}
 	
-	 private double getDistance(Vector2i tile, Vector2i goal) {
-		 double dx = tile.getX() - goal.getX();
-		 double dy = tile.getY() - goal.getY();
-		 return Math.sqrt(dx * dx + dy *dy); //distance 
-	  }
-	
-	
 	private void move() {
-		
 		xa = 0;
 		ya = 0;
 		time++;
-		
-		int px = (int) level.getClientsPlayer().getX();
-		int py = (int) level.getClientsPlayer().getY();
-		Vector2i start = new Vector2i((int)getX() >> 4, (int)getY() >> 4);
-		Vector2i destination = new Vector2i(px >> 4, py >> 4);
-		
-		if(getDistance(start, destination) > 8) {
-			if(time % 60 == 0) {
-				numX = random.nextInt(3) - 1; //reverses direction
-				numY = random.nextInt(3) - 1;
-			}
-			xa--;
-			ya--;
-			xa = xa * numX;
-			ya = ya * numY;		
+
+		// PacMan's current tile position
+		int pacTileX = (int) level.getClientsPlayer().getX() >> 4;
+		int pacTileY = (int) level.getClientsPlayer().getY() >> 4;
+
+		// PacMan's current direction 
+		int dirX = 0;
+		int dirY = 0;
+		if (Player.direction == 2) dirY = -1;
+		if (Player.direction == 3) dirY =  1;
+		if (Player.direction == 1) dirX = -1;
+		if (Player.direction == 0) dirX =  1;
+
+		// Pinky targets 2 tiles ahead of Pac-Man's direction (classic behavior)
+		Vector2i start = new Vector2i((int) getX() >> 4, (int) getY() >> 4);
+		Vector2i destination = new Vector2i(pacTileX + 2 * dirX, pacTileY + 2 * dirY);
+
+		// If destination is a wall, target PacMan's current tile instead
+		if (level.getTile((int) destination.getX(), (int) destination.getY()).solid()) {
+			destination = new Vector2i(pacTileX, pacTileY);
 		}
-		else {
-			path = level.findPath(start, destination);
-			if(path != null) {
-				if(path.size() > 0) {
-					Vector2i vec = path.get(path.size() - 1).tile;
-					if(x < (int)vec.getX() << 4) xa++;
-					if(x > (int)vec.getX() << 4) xa--;
-					if(y < (int)vec.getY() << 4) ya++;
-					if(y > (int)vec.getY() << 4) ya--;
-				}
-			}
+
+		List<Node> path = level.findPath(start, destination);
+		if (path != null && path.size() > 0) {
+			Vector2i vec = path.get(path.size() - 1).tile;
+			if (x < (int) vec.getX() << 4) xa++;
+			if (x > (int) vec.getX() << 4) xa--;
+			if (y < (int) vec.getY() << 4) ya++;
+			if (y > (int) vec.getY() << 4) ya--;
 		}
-		if(xa != 0 || ya != 0) {
+
+		if (xa != 0 || ya != 0) {
 			move(xa, ya);
 			walking = true;
 		} else {
 			walking = false;
 		}
-		if(time % 60 > 120) time = 0; //reset time to avoid game crash
+		if (time % 60 > 120) time = 0;
 	}
 	
 	@Override
-	public void update() {
-		// does shaky walk if scared
-		if(isScared) {
-			xa = random.nextInt(3) - 1; //gives random number from 0 to 2, subtracting one give either -1, 0 or 1 randomly.
-			ya = random.nextInt(3) - 1;		
-			animSprite.update();
-		 
-		    if(xa != 0 || ya != 0) {
-		      move(xa, ya);
-		      walking = true;
-		    } else {
-		      walking = false;
-		    } 
-		}
-		else {
-			move();
-			if(walking) animSprite.update();
-			else animSprite.setFrame(0);
-			if(ya < 0) {
-				dir = Direction.UP;
-			} else if(ya > 0) {
-				dir = Direction.DOWN;
-			}
-			if(xa < 0) {
-				dir = Direction.LEFT;
-			} else if(xa > 0) {
-				dir = Direction.RIGHT;
-			}
-		}
-	}
-	
-	@Override
-	public void render(Screen screen) {
-		sprite = animSprite.getSprites();
-		screen.renderPlayerDynamic((int)x - 7, (int)y - 7, sprite, false);
-	}
+    public void update() {
+        if (isScared) {
+            xa = random.nextInt(3) - 1;
+            ya = random.nextInt(3) - 1;
+            animSprite.update();
+
+            if (xa != 0 || ya != 0) {
+                move(xa, ya);
+                walking = true;
+            } else {
+                walking = false;
+            }
+        } else {
+            move();
+            if (walking)
+                animSprite.update();
+            else
+                animSprite.setFrame(0);
+
+            if (ya < 0)
+                dir = Direction.UP;
+            else if (ya > 0)
+                dir = Direction.DOWN;
+            if (xa < 0)
+                dir = Direction.LEFT;
+            else if (xa > 0)
+                dir = Direction.RIGHT;
+        }
+    }
+
+    @Override
+    public void render(Screen screen) {
+        sprite = animSprite.getSprites();
+        screen.renderPlayerDynamic((int) x - 7, (int) y - 7, sprite, false);
+    }
 }

@@ -91,8 +91,8 @@ public class OrangeGhost extends Mob {
 		if (path != null && path.size() > 0) {
 			// A* returns path from goal back to start, so last element is the next step
 			Vector2i next = path.get(path.size() - 1).tile;
-			int nextPx = next.getX() << 4;
-			int nextPy = next.getY() << 4;
+			int nextPx = (int) next.getX() << 4;
+			int nextPy = (int) next.getY() << 4;
 
 			if (x < nextPx)
 				xa++;

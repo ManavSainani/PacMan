@@ -1,5 +1,10 @@
 package game.entity.mob;
 
+import game.graphics.AnimatedSprite;
+import game.graphics.Screen;
+import game.graphics.Sprite;
+import game.graphics.SpriteSheet;
+import game.util.Vector2i;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -7,11 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import game.graphics.AnimatedSprite;
-import game.graphics.Screen;
-import game.graphics.Sprite;
-import game.graphics.SpriteSheet;
-import game.util.Vector2i;
 
 public class RedGhost extends Mob {
 
@@ -76,8 +76,8 @@ public class RedGhost extends Mob {
 		// Index 0 is the current tile, index 1 is the next step toward Pac-Man
 		if (path != null && path.size() > 1) {
 			Vector2i next = path.get(1);
-			int nextPx = next.getX() << 4;
-			int nextPy = next.getY() << 4;
+			int nextPx = (int) next.getX() << 4;
+			int nextPy = (int) next.getY() << 4;
 
 			if (x < nextPx)
 				xa++;
@@ -140,8 +140,8 @@ public class RedGhost extends Mob {
 			}
 
 			for (int i = 0; i < 4; i++) {
-				int nx = current.getX() + dx[i];
-				int ny = current.getY() + dy[i];
+				int nx = (int)current.getX() + dx[i];
+				int ny = (int) current.getY() + dy[i];
 				Vector2i neighbor = new Vector2i(nx, ny);
 
 				// Only visit unseen, walkable (non-solid) tiles

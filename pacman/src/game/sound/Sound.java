@@ -1,8 +1,5 @@
 package game.sound;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -16,77 +13,71 @@ import javax.sound.sampled.DataLine;
 
 public class Sound implements Runnable {
 
-	private ArrayList<String> musicFiles; // holds sound files
-	private int soundFileIndex;
-	private Clip clip;	
-	
-	public Sound(String...files) {
-		musicFiles = new ArrayList<String>();
-		for(String file : files) {
-			musicFiles.add("src/game/res_sounds/" + file + ".wav");
+	private Clip[] clips;
+
+	public Sound(String... files) {
+		clips = new Clip[files.length];
+		for (int i = 0; i < files.length; i++) {
+			clips[i] = loadClip("/game/res_sounds/" + files[i] + ".wav");
+		}
+		warmUp();
+	}
+
+	private void warmUp() {
+		for (Clip clip : clips) {
+			if (clip == null) continue;
+			clip.start();
+			clip.stop();
+			clip.setFramePosition(0);
 		}
 	}
-	
-	private void playSound(String fileName) {
+
+	private Clip loadClip(String path) {
 		try {
-			File soundFile = new File(fileName);
-			AudioInputStream ais = AudioSystem.getAudioInputStream(soundFile);
+			AudioInputStream ais = AudioSystem.getAudioInputStream(getClass().getResourceAsStream(path));
 			AudioFormat format = ais.getFormat();
 			DataLine.Info info = new DataLine.Info(Clip.class, format);
-			clip = (Clip) AudioSystem.getLine(info);
+			Clip clip = (Clip) AudioSystem.getLine(info);
 			clip.open(ais);
-			//FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-			//gainControl.setValue(-10);
-			clip.start();
-			//clip.stop();
-			//clip.close();
-		
-		} catch(Exception e) {
+			return clip;
+		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public void play(int index) {
+		if (index < 0 || index >= clips.length || clips[index] == null) {
+			return;
+		}
+		Clip clip = clips[index];
+		
+		if (clip.isRunning()) clip.stop();
+		clip.setFramePosition(0);
+		clip.start();
+	}
+
+	public boolean isPlaying(int index) {
+		if (index < 0 || index >= clips.length || clips[index] == null) return false;
+		return clips[index].isRunning();
+	}
+
+	public void stop() {
+		for (Clip clip : clips) {
+			if (clip != null && clip.isRunning()) clip.stop();
+		}
+	}
+
+	public void close() {
+		stop();
+		for (Clip clip : clips) {
+			if (clip != null) clip.close();
 		}
 	}
 
 	@Override
 	public void run() {
-		playSound(musicFiles.get(0));
-		
-	}
-	
-	/*
-	 * 
-	 * Only works with proper formats
-	 * 
-	public Sound(String fileName) {
-		try {
-			AudioInputStream ais = 
-					AudioSystem.getAudioInputStream(getClass().getResourceAsStream("/game/res_sounds/" + fileName + ".wav"));
-			AudioFormat baseFormat = ais.getFormat();
-			AudioFormat decodeFormat = 
-					new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, baseFormat.getSampleRate(), 16, 
-							baseFormat.getChannels(), baseFormat.getChannels() * 2, baseFormat.getSampleRate(), 
-							false);
-			AudioInputStream dais = AudioSystem.getAudioInputStream(decodeFormat, ais); // Streams audio into decode format
-			clip = AudioSystem.getClip();
-			clip.open(dais);
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	*/
-	public void play() {
-		if(clip == null) return;
-		stop();
-		clip.setFramePosition(0); // reset clip
-		clip.start();
-	}
-	
-	public void stop() {
-		if(clip.isRunning()) clip.stop();
-	}
-	
-	public void close() {
-		stop();
-		clip.close();
+		play(0); // intro
 	}
 
 }

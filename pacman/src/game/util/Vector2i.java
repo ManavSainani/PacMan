@@ -82,6 +82,11 @@ public class Vector2i {
 		Vector2i vec = (Vector2i) object;
 		if(vec.getX() == this.getX() && vec.getY() == this.getY()) return true;
 		return false; //if component NOT equal method will returns false
-	
+
+	}
+
+	@Override
+	public int hashCode() {
+		return 31 * x + y;
 	}
 }

@@ -1,18 +1,5 @@
 package game;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.swing.JFrame;
-
 import game.entity.mob.Player;
 import game.graphics.Screen;
 import game.input.Keyboard;
@@ -22,6 +9,16 @@ import game.menu.GameOverMenu;
 import game.menu.MainMenu;
 import game.menu.WinMenu;
 import game.sound.Sound;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.swing.JFrame;
 
 /*
  * This is a recreation of the classic Pac-Man game.
@@ -40,8 +37,8 @@ public class Game extends Canvas implements Runnable {
 
 	private static int width = 512;
 	private static int height = width;
-	private static int scale = 2;
-	private static int decrement = 128; // for size reducing
+	private static int scale = 2 ;
+	private static int decrement = 320; // for size reducing
 	
 	private static String title = "Pac-Man";
 	private boolean running = false;
@@ -100,6 +97,10 @@ public class Game extends Canvas implements Runnable {
 	
 	public static Keyboard getKey() {
 		return key;
+	}
+
+	public static Sound getSound() {
+		return sound;
 	}
 	
 	public synchronized void start() {
@@ -180,20 +181,26 @@ public class Game extends Canvas implements Runnable {
 		g.drawImage(image,  0, 0, width * scale - decrement, height * scale - decrement, null);
 		
 		if(state.equals(STATE.MENU)) {
+			int winW = width * scale - decrement;
+			int winH = height * scale - decrement;
 			g.setFont(new java.awt.Font("Courier", 1, 35));
 			g.setColor(Color.WHITE);
-			g.drawString("Press Spacebar to Play", 200 * 2, 128 * 2);
+			String playText = "Press Spacebar to Play";
+			g.drawString(playText, (winW - g.getFontMetrics().stringWidth(playText)) / 2, winH / 2);
 			g.setFont(new java.awt.Font("Courier", 0, 20));
-			g.drawString("Author: Zev Yirmiyahu", 8 * 2, 432 * 2);
+			String authorText = "Author: Zev Yirmiyahu";
+			g.drawString(authorText, (winW - g.getFontMetrics().stringWidth(authorText)) / 2, winH - 15);
 			mainMenu.render(screen);
 			for(int i = 0; i < pixels.length; i++) {
 				pixels[i] = screen.pixels[i];
 			}
 		}
-		
+
 		if(state.equals(STATE.GAME)) {
+			int winW = width * scale - decrement;
+			int winH = height * scale - decrement;
 			if(beginSound) {
-				pool.execute(sound);
+				sound.play(0);
 				beginSound = false;
 			}
 			g.setFont(new java.awt.Font("Verdana", 1, 25));
@@ -202,9 +209,9 @@ public class Game extends Canvas implements Runnable {
 			for(int i = 0; i < pixels.length; i++) {
 				pixels[i] = screen.pixels[i];
 			}
-			g.drawString("Score: " + Level.getScore(), 10, 25);
+			g.drawString("Score: " + Level.getScore(), winW * 10 / width, winH * 25 / height);
 			g.setFont(new java.awt.Font("Verdana", 1, 20));
-			g.drawString("Life: ", 42 << 4, 1 << 4);
+			g.drawString("Life: ", (int)(27 * 16 * winW / (double) width) - 60, winH * 16 / height);
 		}
 		if(state.equals(STATE.GAMEWIN)) {
 			g.setFont(new java.awt.Font("Verdana", 0, 35));
@@ -231,7 +238,7 @@ public class Game extends Canvas implements Runnable {
 		g.dispose();
 		bs.show();
 	}
-	
+	 
 	public static void main(String args[]) {
 		Game game = new Game();
 		game.frame.setResizable(false);

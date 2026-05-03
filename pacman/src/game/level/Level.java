@@ -1,12 +1,17 @@
 package game.level;
 
-import java.awt.event.KeyEvent;
+//import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+//import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 
@@ -43,9 +48,10 @@ public class Level {
 	private boolean spawnFoods = true;
 	
 	private static boolean isScared = false; // controls whether player can eat a ghost
-	private static boolean canEat = false; // second flag to determine if player can eat ghost 
+	private static boolean canEat = false; // second flag to determine if player can eat ghost
 	private static boolean countScaredTime = false; // allow timer to start count
 	public static boolean reset = false; // flag to call resetGame method
+	private int deathCooldown = 0; // prevents death from re-triggering while death sound plays
 	
 	private static int totalScaredTime = 1; // duration of scared ghosts
 	
@@ -129,6 +135,7 @@ public class Level {
 		if(diff != 0) {
 			score += diff;
 			totalDots = dots.size(); //update total dots available
+			if(!Game.getSound().isPlaying(1)) Game.getSound().play(1); // chomp
 		}
 	}
 	
@@ -182,12 +189,16 @@ public class Level {
 	
 	// checks if player gets eaten
 	private void playerDead() {
+		if (deathCooldown > 0) {
+			deathCooldown--;
+			return;
+		}
 		if(!canEat) {
 			TileCoordinate playerTileCoord = new TileCoordinate(player.currPlayerX, player.currPlayerY);
 			for(int i = 0; i < enemies.size(); i++){
 				TileCoordinate ghostTileCoord = new TileCoordinate(((int)enemies.get(i).getX() >> 4), ((int)enemies.get(i).getY() >> 4)); 
 				if(sameLocation(playerTileCoord, ghostTileCoord)) {
-					
+					System.out.println("[Death] collision detected with enemy " + i + " - playing death sound");
 					// reset ghosts and players location
 					for(int k = 0; k < enemies.size(); k++) {
 						Entity e = enemies.get(k);
@@ -200,8 +211,12 @@ public class Level {
 						if(e instanceof BlueGhost) ((BlueGhost)e).setLocation(14, 16);
 					}
 					players.get(0).setPosition(15 << 4, 23 << 4);
+					Game.getSound().stop();
+					Game.getSound().play(2); // death sound
+					deathCooldown = 180; // 3 seconds at 60fps — lets death sound finish
 					if(lifes.size() == 1) Game.state = Game.STATE.GAMEOVER;
 					else lifes.remove(0); // remove a life
+					break; // prevent other ghosts in same tick from calling stop()
 				}
 			}
 		}
@@ -345,6 +360,7 @@ public class Level {
 		add(new PacmanLife(27, 0));
 		add(new PacmanLife(28, 0));
 		add(new PacmanLife(29, 0));	
+		deathCooldown = 0;
 		reset = false;
 	}
 	
@@ -468,65 +484,70 @@ public class Level {
 			lifes.remove((PacmanLife)e);
 		}
 	}
-	
-	// A* Algorithm search Algorithm
+
+	// A* Search Algorithm
 	public List<Node> findPath(Vector2i start, Vector2i goal) {
-		List<Node> openList = new ArrayList<Node>(); //All possible Nodes(tiles) that could be shortest path
-		List<Node> closedList = new ArrayList<Node>(); //All no longer considered Nodes(tiles)
-		Node current = new Node(start, null, 0, getDistance(start, goal)); //Current Node that is being considered(first tile)			openList.add(current);
-		//System.out.println("start = " + start + ", getDistance = " + getDistance(start, goal));
-		openList.add(current);
-		while(openList.size() > 0) {
-			Collections.sort(openList, nodeSorter); // will sort open list based on what's specified in the comparator
-				current = openList.get(0); // sets current Node to first possible element in openList
-				if(current.tile.equals(goal)) {
-					List<Node> path = new ArrayList<Node>(); //adds the nodes that make the path 
-					while(current.parent != null) { //retraces steps from finish back to start
-						path.add(current); // add current node to list
-						current = current.parent; //sets current node to previous node to trace path back to start
-					}
-					openList.clear(); //erases from memory since algorithm is finished, ensures performance is not affected since garbage collection may not be called
-					closedList.clear();
-					return path; //returns the desired result shortest/quickest path
+		PriorityQueue<Node> openQueue = new PriorityQueue<>(nodeSorter); // keeps order automatically
+		Map<Vector2i, Node> openMap = new HashMap<>(); // checks if tile is already queued                 
+		Set<Vector2i> closedSet = new HashSet<>(); // checks if tile has already been visited                   
+
+		Node startNode = new Node(start, null, 0, getDistance(start, goal));
+		openQueue.add(startNode);
+		openMap.put(start, startNode);
+
+		while (!openQueue.isEmpty()) {
+			Node current = openQueue.poll(); // always retrieves lowest fCost — no sort needed
+			closedSet.add(current.tile);
+
+			// Path found — reconstruct from goal back to start
+			if (current.tile.equals(goal)) {
+				List<Node> path = new ArrayList<>();
+				while (current.parent != null) {
+					path.add(current);
+					current = current.parent;
 				}
-				openList.remove(current); //if current Node is not part of path to goal remove
-				closedList.add(current); //and puts it in closedList, because it's not used
-				for(int i = 0; i < 9; i++ ) { //8-adjacent tile possibilities
-					if(i == 4) continue; //index 4 is the middle tile (tile player currently stands on), no reason to check it
-					int x = (int)current.tile.getX();
-					int y = (int)current.tile.getY();
-					int xi = (i % 3) - 1; //will be either -1, 0 or 1
-					int yi = (i / 3) - 1; // sets up a coordinate position for Nodes (tiles)
-					Tile at = getTile(x + xi, y + yi); // at tile be all surrounding tiles when iteration is run
-					if(at == null) continue; //if empty tile skip it
-					//Commented out code to avoid game crash until collision is more exact
-					//if(at.solid()) continue; //if solid cant pass through so skip/ don't consider this tile
-					Vector2i a = new Vector2i(x + xi, y + yi); //Same thing as node(tile), but changed to a vector
-					double gCost = current.gCost + (getDistance(current.tile, a) == 1 ? 1 : 0.95); //*calculates only adjacent nodes* current tile (initial start is 0) plus distance between current tile to tile being considered (a)
-					double hCost = getDistance(a, goal);								// conditional piece above for gCost makes a more realist chasing, because without it mob will NOT use diagonals because higher gCost
-					Node node = new Node(a, current, gCost, hCost);
-					if(vecInList(closedList, a) && gCost >= node.gCost) continue; //is node has already been checked 
-					if(!vecInList(openList, a) || gCost < node.gCost) openList.add(node);
+				return path;
+			}
+
+			int[] dxs = {-1, 1, 0, 0};
+			int[] dys = {0, 0, -1, 1};
+
+			for (int i = 0; i < 4; i++) {
+				int nx = (int) current.tile.getX() + dxs[i];
+				int ny = (int) current.tile.getY() + dys[i];
+
+				// Skip walls and out-of-bounds
+				Tile at = getTile(nx, ny);
+				if (at == null || at.solid()) continue;
+
+				Vector2i neighborTile = new Vector2i(nx, ny);
+
+				// Skip already evaluated tiles
+				if (closedSet.contains(neighborTile)) continue;
+
+				double gCost = current.gCost + 1;
+				double hCost = getDistance(neighborTile, goal);
+				Node neighbor = new Node(neighborTile, current, gCost, hCost);
+
+				// Only add if not already in open list, or if this path is cheaper
+				Node existing = openMap.get(neighborTile);
+				if (existing == null || gCost < existing.gCost) {
+					openQueue.add(neighbor);
+					openMap.put(neighborTile, neighbor);
 				}
 			}
-			closedList.clear(); //clear the list, openList will have already been clear if no path was found
-			return null; //a default return if no possible path was found
-	}
-	
-	private boolean vecInList(List<Node> list, Vector2i vector) {
-		for(Node n : list) {
-			if(n.tile.equals(vector)) return true;
 		}
-		return false; // if gone through entire list and NOT there return false
-	  }
-	  
-	  // Distance Method used in A* Algorithm above
-	  private double getDistance(Vector2i tile, Vector2i goal) {
-		  double dx = tile.getX() - goal.getX();
-		  double dy = tile.getY() - goal.getY();
-		  return Math.sqrt(dx * dx + dy * dy); //distance 
-	  }
-	//END OF A* SEARCH ALGORITHM CODE
+
+		return null; // No path found
+	}
+
+	// Manhattan distance used instead of Euclidean (cardinal directions only)
+	private double getDistance(Vector2i tile, Vector2i goal) {
+		return Math.abs(tile.getX() - goal.getX())
+			+ Math.abs(tile.getY() - goal.getY());
+	}
+	// END OF A* SEARCH ALGORITHM CODE
+	
 	
 	public Player getClientsPlayer() {
 		return players.get(0); //returns the first player, the main player is always first in Player List
