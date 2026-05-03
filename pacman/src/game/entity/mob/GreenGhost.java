@@ -1,14 +1,13 @@
 package game.entity.mob;
 
-import java.util.List;
-
-import game.entity.mob.Mob.Direction;
+//import game.entity.mob.Mob.Direction;
 import game.graphics.AnimatedSprite;
 import game.graphics.Screen;
 import game.graphics.Sprite;
 import game.graphics.SpriteSheet;
 import game.level.Node;
 import game.util.Vector2i;
+import java.util.List;
 
 public class GreenGhost extends Mob {
 	
@@ -17,12 +16,13 @@ public class GreenGhost extends Mob {
 	private double numX = 1;
 	private double numY = 1;
 	
-	private int detectionRange = 10;
+	// Ghost chases PacMan once within detection range of 20 tiles, otherwise it moves randomly.
+	private int DETECTION_RANGE = 20; 
 	private int time = 0;
 
 	private boolean walking = false;
 	private boolean isScared = false;
-	private List<Node> path = null; //default equals null
+	
 
 	private AnimatedSprite animSprite = new AnimatedSprite(SpriteSheet.greenGhost, 16, 16, 3);
 	private Sprite sprite;
@@ -54,7 +54,6 @@ public class GreenGhost extends Mob {
 	}
 	
 	private void move() {
-		
 		xa = 0;
 		ya = 0;
 		time++;
@@ -64,18 +63,16 @@ public class GreenGhost extends Mob {
 		Vector2i start = new Vector2i((int)getX() >> 4, (int)getY() >> 4);
 		Vector2i destination = new Vector2i(px >> 4, py >> 4);
 		
-		if(getDistance(start, destination) > detectionRange) {
+		if(getDistance(start, destination) > DETECTION_RANGE) {
 			if(time % 60 == 0) {
 				numX = random.nextInt(3) - 1; //reverses direction
 				numY = random.nextInt(3) - 1;
 			}
-			xa--;
-			ya--;
-			xa = xa * numX;
-			ya = ya * numY;		
+			xa = numX;
+			ya = numY;		
 		}
 		else {
-			path = level.findPath(start, destination);
+			List<Node> path = level.findPath(start, destination);
 			if(path != null) {
 				if(path.size() > 0) {
 					Vector2i vec = path.get(path.size() - 1).tile;
@@ -87,6 +84,7 @@ public class GreenGhost extends Mob {
 			}
 		}
 		if(xa != 0 || ya != 0) {
+			move(xa, ya); // moves twice as fast as player
 			move(xa, ya);
 			walking = true;
 		} else {

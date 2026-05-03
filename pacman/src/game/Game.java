@@ -239,7 +239,7 @@ public class Game extends Canvas implements Runnable {
 		bs.show();
 	}
 	 
-	public static void main(String args[]) {
+	public static void main(String args[]) {  
 		Game game = new Game();
 		game.frame.setResizable(false);
 		game.frame.setTitle(title);
