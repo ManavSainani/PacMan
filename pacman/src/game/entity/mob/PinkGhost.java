@@ -7,21 +7,6 @@ import game.level.Node;
 import game.util.Vector2i;
 import java.util.List;
 
-/**
-	 * A* Predictive Algorithm .
-	 *
-	 * Pinky's implementation involves the A* algorithm, which uses the predictive heuristic to anticipate
-	 * Pac-Man's future position and target that location, rather than his current position (Blinky). 
-	 * It does this by calculating 2 steps ahead of Pac-Man's current position, making this approach more dynamic
-	 * and unpredictable.
-	 *
-	 * Based on the Rule-Based Pursuit Algorithm described in:
-	 * Novikov, A., Yakovlev, S., & Gushchin, I. (2025).
-	 * Radioelectronic and Computer Systems, 1(113), 327-337.
-	 * https://doi.org/10.32620/reks.2025.1.21
-	 */
-
-
 public class PinkGhost extends Mob {
 
 	private double xa = 0;
@@ -52,7 +37,21 @@ public class PinkGhost extends Mob {
 		this.x = x << 4;
 		this.y = y << 4;
 	}
-	
+
+	/**
+	 * A* Predictive Algorithm
+	 *
+	 * Pinky's implementation involves the A* algorithm, which uses the predictive heuristic to anticipate
+	 * Pac-Man's future position and target that location, rather than his current position (Blinky). 
+	 * It does this by calculating 2 steps ahead of Pac-Man's current position, making this approach more dynamic
+	 * and unpredictable.
+	 * 
+	 * Predictive Pursuit Reference:
+	 * Novikov, A., Yakovlev, S., & Gushchin, I. (2025).
+	 * Radioelectronic and Computer Systems, 1(113), 327-337.
+	 * https://doi.org/10.32620/reks.2025.1.21
+	 */
+
 	private void move() {
 		xa = 0;
 		ya = 0;
@@ -62,7 +61,7 @@ public class PinkGhost extends Mob {
 		int pacTileX = (int) level.getClientsPlayer().getX() >> 4;
 		int pacTileY = (int) level.getClientsPlayer().getY() >> 4;
 
-		// PacMan's current direction 
+		// PacMan's anticipated direction 
 		int dirX = 0;
 		int dirY = 0;
 		if (Player.direction == 2) dirY = -1;
@@ -70,7 +69,7 @@ public class PinkGhost extends Mob {
 		if (Player.direction == 1) dirX = -1;
 		if (Player.direction == 0) dirX =  1;
 
-		// Pinky targets 2 tiles ahead of Pac-Man's direction (classic behavior)
+		// Pinky targets 2 tiles ahead of Pac-Man's direction (opposed to 4 in classic game)
 		Vector2i start = new Vector2i((int) getX() >> 4, (int) getY() >> 4);
 		Vector2i destination = new Vector2i(pacTileX + 2 * dirX, pacTileY + 2 * dirY);
 
@@ -79,6 +78,7 @@ public class PinkGhost extends Mob {
 			destination = new Vector2i(pacTileX, pacTileY);
 		}
 
+		// A* pathfinding to the target tile (builds path from destination back to start)
 		List<Node> path = level.findPath(start, destination);
 		if (path != null && path.size() > 0) {
 			Vector2i vec = path.get(path.size() - 1).tile;
@@ -88,6 +88,7 @@ public class PinkGhost extends Mob {
 			if (y > (int) vec.getY() << 4) ya--;
 		}
 
+		// Movement of ghost is determined by a feasible A* path - i.e. no path, no movement
 		if (xa != 0 || ya != 0) {
 			move(xa, ya);
 			walking = true;
