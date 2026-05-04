@@ -96,8 +96,8 @@ public class BlueGhost extends Mob {
 
 			if (path != null && path.size() > 1) {
 				Vector2i next = path.get(1);
-				int nextPx = next.getX() << 4;
-				int nextPy = next.getY() << 4;
+				int nextPx = (int)next.getX() << 4;
+				int nextPy = (int) next.getY() << 4;
 
 				if (x < nextPx)
 					xa++;
@@ -127,7 +127,7 @@ public class BlueGhost extends Mob {
 			Vector2i predicted = new Vector2i(pacTileX + 2 * dirX, pacTileY + 2 * dirY);
 
 			// Fall back to current tile if predicted tile is a wall (same as PinkGhost)
-			if (level.getTile(predicted.getX(), predicted.getY()).solid()) {
+			if (level.getTile((int) predicted.getX(), (int) predicted.getY()).solid()) {
 				predicted = currentTile;
 			}
 
@@ -135,13 +135,13 @@ public class BlueGhost extends Mob {
 
 			if (path != null && path.size() > 0) {
 				Vector2i vec = path.get(path.size() - 1).tile;
-				if (x < vec.getX() << 4)
+				if (x < (int) vec.getX() << 4)
 					xa++;
-				if (x > vec.getX() << 4)
+				if (x > (int) vec.getX() << 4)
 					xa--;
-				if (y < vec.getY() << 4)
+				if (y < (int) vec.getY() << 4)
 					ya++;
-				if (y > vec.getY() << 4)
+				if (y > (int) vec.getY() << 4)
 					ya--;
 			}
 		}
@@ -195,8 +195,8 @@ public class BlueGhost extends Mob {
 			}
 
 			for (int i = 0; i < 4; i++) {
-				int nx = current.getX() + dx[i];
-				int ny = current.getY() + dy[i];
+				int nx = (int) current.getX() + dx[i];
+				int ny = (int) current.getY() + dy[i];
 				Vector2i neighbor = new Vector2i(nx, ny);
 
 				if (!cameFrom.containsKey(neighbor) && !level.getTile(nx, ny).solid()) {
