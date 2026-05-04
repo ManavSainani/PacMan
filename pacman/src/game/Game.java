@@ -23,13 +23,12 @@ import javax.swing.JFrame;
 /*
  * This is a recreation of the classic Pac-Man game.
  * 
- * @author Zev Yirmiyahu
+ * @author Christa-Marie Seerattan, Manav Sainani
  * 
- * E-Mail: zy@zevyirmiyahu.com
  * 
- * GitHub: https://github.com/zevyirmiyahu 
+ * GitHub original repo: https://github.com/zevyirmiyahu 
+ * Github customized repo: https://github.com/christamaries/PacMan
  * 
- * Personal Website: www.zevyirmiyahu.com
  * 
  */
 
