@@ -16,13 +16,13 @@ public class OrangeGhost extends Mob {
 
 	/**
 	 * Clyde flees to his scatter corner when Pac-Man is within this many tiles
-	 * (Euclidean distance). Classic Pac-Man uses 8 tiles.
+	 * (Euclidean distance). 8 tiles.
 	 */
 	private static final double FLEE_RADIUS = 8.0;
 
 	/**
-	 * Clyde's scatter corner in tile coordinates — where he retreats when
-	 * Pac-Man gets too close. Bottom-left area of the maze.
+	 * Clyde's scatter corner in tile coordinates: where he retreats when
+	 * Pac-Man gets too close. Bottom left area of the maze.
 	 */
 	private static final Vector2i SCATTER_CORNER = new Vector2i(2, 29);
 
@@ -63,12 +63,12 @@ public class OrangeGhost extends Mob {
 	 *
 	 * When close to Pac-Man (distance <= 8 tiles): panics and retreats to
 	 * his scatter corner (bottom-left of the maze) instead of continuing
-	 * the chase. This makes him unpredictable — he approaches, gets scared,
-	 * runs away, gets far enough, then turns back around to chase again.
+	 * the chase. He approaches, gets scared, runs away, gets far enough,
+	 * then turns back around to chase again, making him unpredictable.
 	 *
 	 * Reference:
-	 * Birch, C. (2010). Understanding Pac-Man Ghost Behavior.
-	 * GameInternals. https://gameinternals.com/understanding-pac-man-ghost-behavior
+	 * https://pacman.fandom.com/wiki/Maze_Ghost_AI_Behaviors
+	 * https://nti.khai.edu/ojs/index.php/reks/article/view/reks.2025.1.21
 	 */
 	private void move() {
 		xa = 0;

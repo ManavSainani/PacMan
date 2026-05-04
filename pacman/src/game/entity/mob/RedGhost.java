@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-
 public class RedGhost extends Mob {
 
 	private double xa = 0;
@@ -54,16 +53,14 @@ public class RedGhost extends Mob {
 	 *
 	 * Based on the Rule-Based Pursuit Algorithm described in:
 	 * Novikov, A., Yakovlev, S., & Gushchin, I. (2025).
-	 * Radioelectronic and Computer Systems, 1(113), 327-337.
-	 * https://doi.org/10.32620/reks.2025.1.21
+	 * https://nti.khai.edu/ojs/index.php/reks/article/view/reks.2025.1.21
 	 */
 	private void move() {
 		xa = 0;
 		ya = 0;
 		time++;
 
-		// Get Pac-Man's tile position via the level reference (same pattern as
-		// PinkGhost)
+		// Get Pac-Man's tile position via the level reference
 		int px = (int) level.getClientsPlayer().getX();
 		int py = (int) level.getClientsPlayer().getY();
 		Vector2i start = new Vector2i((int) getX() >> 4, (int) getY() >> 4);
@@ -101,7 +98,7 @@ public class RedGhost extends Mob {
 	}
 
 	/**
-	 * Breadth-First Search from start tile to goal tile.
+	 * Breadth First Search from start tile to goal tile.
 	 *
 	 * Explores all four cardinal neighbors level by level, skipping any tile
 	 * that is solid (a wall). Records each tile's predecessor in cameFrom so
@@ -140,11 +137,11 @@ public class RedGhost extends Mob {
 			}
 
 			for (int i = 0; i < 4; i++) {
-				int nx = (int)current.getX() + dx[i];
+				int nx = (int) current.getX() + dx[i];
 				int ny = (int) current.getY() + dy[i];
 				Vector2i neighbor = new Vector2i(nx, ny);
 
-				// Only visit unseen, walkable (non-solid) tiles
+				// Only visit unseen, walkable (non solid) tiles
 				if (!cameFrom.containsKey(neighbor) && !level.getTile(nx, ny).solid()) {
 					cameFrom.put(neighbor, current);
 					queue.add(neighbor);
@@ -175,7 +172,7 @@ public class RedGhost extends Mob {
 	@Override
 	public void update() {
 		if (isScared) {
-			// Random walk when frightened — same pattern as other ghosts
+			// Random walk when frightened, same pattern as other ghosts
 			xa = random.nextInt(3) - 1;
 			ya = random.nextInt(3) - 1;
 			animSprite.update();
