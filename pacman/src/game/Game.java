@@ -223,7 +223,7 @@ public class Game extends Canvas implements Runnable {
 			g.drawString("SCORE: " + Level.getScore(), 512, 96);
 			g.setFont(new java.awt.Font("Courier", 1, 25));
 			g.drawString("Replay : Press Spacebar", 512, 160);
-
+ 
 		}
 		if(state.equals(STATE.GAMEOVER)) {
 			beginSound = true; // reset sound flag

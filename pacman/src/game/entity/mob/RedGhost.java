@@ -87,7 +87,7 @@ public class RedGhost extends Mob {
 		}
 
 		if (xa != 0 || ya != 0) {
-			move(xa, ya);
+			move(xa * speed, ya * speed);
 			walking = true;
 		} else {
 			walking = false;

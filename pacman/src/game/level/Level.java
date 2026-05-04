@@ -19,6 +19,7 @@ import game.Game;
 import game.entity.Entity;
 import game.entity.mob.Banana;
 import game.entity.mob.BigDot;
+import game.entity.mob.Mob;
 import game.entity.mob.BlueGhost;
 import game.entity.mob.GreenGhost;
 import game.entity.mob.OrangeGhost;
@@ -54,6 +55,8 @@ public class Level {
 	public static int numberOfFoods = 3; // total number of foods left in game, intially 3 foods: poop, banana, strawberry
 	private boolean spawnFoods = true;
 	
+	private static final int SPEED_BOOST_THRESHOLD = 30;
+
 	private static boolean isScared = false; // controls whether player can eat a ghost
 	private static boolean canEat = false; // second flag to determine if player can eat ghost
 	private static boolean countScaredTime = false; // allow timer to start count
@@ -342,6 +345,12 @@ public class Level {
 		}
 	}
 	
+	private void setGhostSpeed(double speed) {
+		for (Entity e : enemies) {
+			if (e instanceof Mob) ((Mob) e).setSpeed(speed);
+		}
+	}
+
 	public void resetGameLevel() {
 		generateDots(); //reset all dots to level
 		score = 0; // reset score
@@ -350,6 +359,7 @@ public class Level {
 		foods.clear();
 		players.get(0).setPosition(15 << 4, 23 << 4); //reset player position
 		// *Note: Game state is updated in menu screen classes
+		setGhostSpeed(1.0);
 
 		for(int i = 0; i < enemies.size(); i++) {
 			Entity e = enemies.get(i);
@@ -420,6 +430,8 @@ public class Level {
 			spawnFoods = false; // set flag to no more respawns
 		}
 		
+		if (dots.size() > 0 && dots.size() <= SPEED_BOOST_THRESHOLD) setGhostSpeed(2.0);
+
 		if(dots.isEmpty()) Game.state = Game.state.GAMEWIN; // if no dots left, player has won, change state			
 		if(reset) resetGameLevel(); // check to replay
 	}

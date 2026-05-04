@@ -96,7 +96,7 @@ public class PinkGhost extends Mob {
 
 		// Movement of ghost is determined by a feasible A* path - i.e. no path, no movement
 		if (xa != 0 || ya != 0) {
-			move(xa, ya);
+			move(xa * speed, ya * speed);
 			walking = true;
 		} else {
 			walking = false;

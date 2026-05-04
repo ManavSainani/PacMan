@@ -4,10 +4,15 @@ import game.entity.Entity;
 import game.graphics.Screen;
 
 public abstract class Mob extends Entity {
-	
+
 	protected boolean moving = false;
 	protected boolean walking = false;
 	protected int health;
+	protected double speed = 1.0;
+
+	public void setSpeed(double speed) {
+		this.speed = speed;
+	}
 	
 	protected enum Direction {
 		UP,
