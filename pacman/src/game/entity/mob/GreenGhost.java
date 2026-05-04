@@ -17,7 +17,7 @@ public class GreenGhost extends Mob {
 	private double numY = 1;
 	
 	// Ghost chases PacMan once within detection range of 20 tiles, otherwise it moves randomly.
-	private int DETECTION_RANGE = 20; 
+	private int DETECTION_RANGE = 35; 
 	private int time = 0;
 
 	private boolean walking = false;
